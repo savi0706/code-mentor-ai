@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Code Mentor AI</title>
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Segoe UI, sans-serif;
+      background: #121826;
+      color: #e2e8f0;
+      display: flex;
+    }
+
+    .sidebar {
+      width: 260px;
+      background: #0c1120;
+      height: 100vh;
+      padding: 20px;
+      border-right: 1px solid #2d3749;
+    }
+
+    .logo {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+
+    .logo i {
+      background: linear-gradient(135deg, #7e6fff, #6a5af9);
+      padding: 12px;
+      border-radius: 10px;
+    }
+
+    .menu-item {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      color: #94a3b8;
+    }
+
+    .menu-item.active,
+    .menu-item:hover {
+      background: rgba(126, 111, 255, 0.15);
+      color: #7e6fff;
+    }
+
+    .main {
+      flex: 1;
+      padding: 30px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      background: #1e293b;
+      color: white;
+      border: 1px solid #2d3749;
+      border-radius: 10px;
+      padding: 15px;
+      font-size: 16px;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #7e6fff;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 15px;
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background: linear-gradient(135deg, #7e6fff, #6a5af9);
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .output {
+      margin-top: 25px;
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 10px;
+      min-height: 200px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(126,111,255,0.3);
+      border-top-color: #7e6fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 30px auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error {
+      color: #ef4444;
+      font-weight: bold;
+    }
+
+    code {
+      background: #0f172a;
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: #00d4ff;
+    }
+
+    pre {
+      background: #0f172a;
+      padding: 15px;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <i class="fas fa-robot"></i>
+      Code Mentor AI
+    </div>
+
+    <div class="menu-item active"><i class="fas fa-home"></i> Dashboard</div>
+    <div class="menu-item"><i class="fas fa-history"></i> History</div>
+    <div class="menu-item"><i class="fas fa-code"></i> Playground</div>
+    <div class="menu-item"><i class="fas fa-cog"></i> Settings</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <h1>Code Mentor AI</h1>
+
+    <textarea id="question" placeholder="Ask any coding question..."></textarea>
+
+    <button id="askBtn">
+      <i class="fas fa-paper-plane"></i> Ask AI
+    </button>
+
+    <div id="output" class="output">
+      Ask a coding question to get started 👨‍💻
+    </div>
+  </div>
+
+  <script>
+    const askBtn = document.getElementById("askBtn");
+    const questionEl = document.getElementById("question");
+    const output = document.getElementById("output");
+
+    askBtn.addEventListener("click", async () => {
+      const question = questionEl.value.trim();
+      if (!question) {
+        output.innerHTML = "<span class='error'>Please enter a question.</span>";
+        return;
+      }
+
+      askBtn.disabled = true;
+      output.innerHTML = "<div class='spinner'></div>";
+
+      try {
+        const res = await fetch("http://localhost:5000/api/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Server error");
+        }
+
+        output.innerHTML = formatResponse(data.answer);
+
+      } catch (err) {
+        output.innerHTML = `<span class="error">❌ ${err.message}</span>`;
+      } finally {
+        askBtn.disabled = false;
+      }
+    });
+
+    function formatResponse(text) {
+      return text
+        .replace(/```([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\n/g, "<br>");
+    }
+  </script>
+
+</body>
+</html>
+
